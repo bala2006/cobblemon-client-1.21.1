@@ -1,0 +1,9 @@
+# Windows line endings for the scripts, so they work no matter which OS the repo
+# was cloned from or how the cloner's core.autocrlf is set.
+# (A .bat file with LF endings can silently misbehave.)
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# Data and docs: keep LF everywhere so hashes stay comparable across machines.
+*.json text eol=lf
+*.md   text eol=lf
