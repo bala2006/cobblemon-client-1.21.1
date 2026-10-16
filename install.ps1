@@ -75,7 +75,7 @@ function Install-RemoteFile {
         if ($size -ne $ExpectedSize) {
             throw "size mismatch for ${Label}: got $size bytes, expected $ExpectedSize"
         }
-        $sum = (Get-FileHash $tmp -Algorithm SHA512).Hash.ToLower()
+        $sum = Get-Sha512Hex $tmp
         if ($sum -ne $ExpectedSha512.ToLower()) {
             throw "SHA-512 mismatch for ${Label}`n      expected $ExpectedSha512`n      got      $sum"
         }
@@ -127,7 +127,7 @@ foreach ($e in $entries) {
     # is the exact right content already there?
     $needDownload = $true
     if ((Test-Path $target) -and -not $Force) {
-        if ((Get-FileHash $target -Algorithm SHA512).Hash.ToLower() -eq $e.sha512.ToLower()) {
+        if ((Get-Sha512Hex $target) -eq $e.sha512.ToLower()) {
             Write-Ok "already installed and verified - skipped"
             $results += [pscustomobject]@{ Name = $e.name; Status = 'up to date'; File = $e.filename }
             $needDownload = $false
