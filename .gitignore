@@ -1,0 +1,8 @@
+# This repo ships the installer + manifest, never the third-party binaries.
+# (Cobblemon alone is 133 MB; GitHub rejects files >= 100 MB.)
+*.jar
+*.zip
+*.mrpack
+
+# installer scratch
+*.part
