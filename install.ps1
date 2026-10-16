@@ -32,6 +32,17 @@ function Write-Step { param([string]$Text) Write-Host "[*] $Text" -ForegroundCol
 function Write-Ok   { param([string]$Text) Write-Host "    $Text" -ForegroundColor Green }
 function Write-Warn2{ param([string]$Text) Write-Host "    $Text" -ForegroundColor Yellow }
 
+# Get-FileHash only exists from PowerShell 4.0 up and needs a working module path.
+# .NET's SHA-512 is present on every Windows install, so we use that instead.
+function Get-Sha512Hex {
+    param([string] $Path)
+    $sha = [System.Security.Cryptography.SHA512]::Create()
+    $fs  = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try     { $hash = $sha.ComputeHash($fs) }
+    finally { $fs.Dispose(); $sha.Dispose() }
+    return ([BitConverter]::ToString($hash) -replace '-', '').ToLower()
+}
+
 function Install-RemoteFile {
     param(
         [string] $Uri,
@@ -46,8 +57,13 @@ function Install-RemoteFile {
         for ($i = 1; $i -le 3 -and -not $ok; $i++) {
             try {
                 if ($i -gt 1) { Write-Warn2 "retrying ($i/3)..." }
-                Invoke-WebRequest -Uri $Uri -OutFile $tmp -UseBasicParsing -TimeoutSec 900 `
-                    -Headers @{ 'User-Agent' = 'cobblemon-client-installer/1.0' }
+                # .NET WebClient, not Invoke-WebRequest: streams straight to disk and does
+                # not depend on which Microsoft.PowerShell.Utility module got autoloaded.
+                $wc = New-Object System.Net.WebClient
+                try {
+                    $wc.Headers.Add('User-Agent', 'cobblemon-client-installer/1.0')
+                    $wc.DownloadFile($Uri, $tmp)
+                } finally { $wc.Dispose() }
                 $ok = $true
             } catch {
                 if ($i -eq 3) { throw }

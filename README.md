@@ -91,10 +91,10 @@ mode, so a public address would let anyone in. Ask for it directly.
 | Download fails | Re-run it - already-verified files are skipped, so it resumes cheaply |
 | Wrong game folder | Pass `-GameDir`, e.g. for a custom launcher instance |
 
-Verify a file by hand anytime:
+Verify a file by hand anytime (certutil ships with Windows and needs no PowerShell modules):
 
-```powershell
-Get-FileHash "$env:APPDATA\.minecraft\mods\Cobblemon-fabric-1.8.2+1.21.1.jar" -Algorithm SHA512
+```
+certutil -hashfile "%APPDATA%\.minecraft\mods\Cobblemon-fabric-1.8.2+1.21.1.jar" SHA512
 # compare with the sha512 in mods.json
 ```
 
@@ -110,6 +110,16 @@ Get-FileHash "$env:APPDATA\.minecraft\mods\Cobblemon-fabric-1.8.2+1.21.1.jar" -A
 So this repo ships the *recipe*, not the ingredients, and each file keeps its own licence.
 
 ## Maintenance
+
+### Why .NET instead of PowerShell cmdlets
+
+`install.ps1` hashes and downloads with .NET types (`[System.Security.Cryptography.SHA512]`,
+`System.Net.WebClient`) instead of `Get-FileHash` / `Invoke-WebRequest`. This is deliberate: if
+PowerShell 5.1 inherits a `PSModulePath` that still contains a PowerShell 7 module directory (which
+happens when it is launched from `cmd` in a shell that has PowerShell 7 on its path), it autoloads
+`Microsoft.PowerShell.Utility` **v7.0.0.0**, which does **not** contain `Get-FileHash`. The script
+then dies with `The term 'Get-FileHash' is not recognized`, even though the same script runs fine when
+launched from PowerShell directly. .NET types have no such dependency.
 
 To bump a version: edit the entry in `mods.json` (filename, version, size, `sha1`, `sha512`,
 `url`) and commit. Everything else is unchanged. `size` and both hashes are checked, so a
